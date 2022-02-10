@@ -1,27 +1,83 @@
 import browser from 'webextension-polyfill';
 
-let currentTab: any;
+// let currentTab: any;
 
-browser.tabs.query({active: true, currentWindow: true}).then(tabs => currentTab = tabs[0])
+// browser.tabs.query({active: true, currentWindow: true}).then(tabs => currentTab = tabs[0])
 
 export const Popup = () => {
-  const handleCats = () => {
-    browser.tabs.sendMessage(currentTab.id, { command: 'swap-with-cats'})
+
+  let timeLeft = 0;
+  let intervalId = null;
+
+  const startTimer = () => {
+    if (intervalId) {
+      pauseTimer();
+    }
+    resetTimer();
+    resumeTimer();
   }
 
-  const handleDogs = () => {
-    browser.tabs.sendMessage(currentTab.id, { command: 'swap-with-dogs'})
+  const resumeTimer = () => {
+    if (intervalId) {
+      return;
+    }
+    intervalId = setInterval(() => {
+      timeLeft -= 1;
+      if (timeLeft <= 0) {
+        console.log("We are finished!");
+      }
+    }, 1000); // Every second
   }
+
+  const pauseTimer = () => {
+    if (intervalId === null) {
+      return;
+    }
+    window.clearInterval(intervalId);
+    intervalId = null;
+  }
+
+  const resetTimer = () => {
+    timeLeft = 60*25;
+  }
+
+  const convertSecondsToDisplay = () => {
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+
+    let displayString = '';
+    if (minutes < 10) {
+      displayString += '0';
+    }
+    displayString += minutes.toString();
+    displayString += ':';
+    if (seconds < 10) {
+      displayString += '0';
+    }
+    displayString += seconds.toString();
+    return displayString;
+  }
+
   return (
-    <div className="flex flex-col items-center gap-3 justify-center w-48 p-3 bg-gradient-to-r min-h-full from-emerald-500 to-emerald-400">
-      <button onClick={handleCats} className="text-lg flex-none py-1 px-3 rounded-lg bg-emerald-100 text-emerald-600 mr-sm flex items-center justify-center">
-        <img src="../assets/cat_512.png" alt="cat icon" className="w-8 h-8 mr-3" />
-        cats
-      </button>
-      <button onClick={handleDogs} className="text-lg flex-none py-1 px-3 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center">
-        <img src="../assets/dog_512.png" alt="dog icon" className="w-8 h-8 mr-3" />
-        dogs
-      </button>
+    <div className="main-popup">
+      <main className='timer-display'>
+        <p>{convertSecondsToDisplay()}</p>
+      </main>
+      <section className='buttons-panel'>
+        <button onClick={startTimer} className="">
+          {/* <img src="../assets/cat_512.png" alt="cat icon" className="w-8 h-8 mr-3" /> */}
+          start
+        </button>
+        <button onClick={resumeTimer} className="">
+          resume
+        </button>
+        <button onClick={pauseTimer} className="">
+          pause
+        </button>
+        <button onClick={resetTimer} className="">
+          reset
+        </button>
+      </section>
     </div>
     )
 }

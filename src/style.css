@@ -1,0 +1,30 @@
+.main-popup {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: green;
+    background: linear-gradient(to right, #a1d3b0, #f6f1d3);
+    align-items: center;
+}
+
+.main-popup > * {
+    margin: 0.5rem;
+}
+
+.timer-display {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.buttons-panel {
+    display: flex;
+    justify-content: center;
+}
+
+button {
+    border-radius: 50%;
+    width: 3.2rem;
+    height: 3.2rem;
+    background-color: white;
+}
