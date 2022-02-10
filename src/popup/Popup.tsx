@@ -8,6 +8,7 @@ interface IState {
   timeLeft: number;
   intervalId: any;
   displayTime: string;
+  isPaused: boolean;
 }
 
 class Popup extends React.Component<IProps, IState> {
@@ -15,15 +16,19 @@ class Popup extends React.Component<IProps, IState> {
     timeLeft: 0,
     intervalId: null,
     displayTime: '',
+    isPaused: true,
   }
 
   constructor() {
     super();
+
     this.state = {
       timeLeft: 0,
       intervalId: null,
       displayTime: this.convertSecondsToDisplay(0),
+      isPaused: true,
     }
+    this.restoreFromLocalStorage();
   }
 
   private startTimer = () => {
@@ -47,6 +52,8 @@ class Popup extends React.Component<IProps, IState> {
         displayTime: this.convertSecondsToDisplay(seconds),
       });
       console.log(this.state.timeLeft);
+      // In case user toggles out of extension
+      this.writeTimeLeftToLocalStorage(seconds);
       if (this.state.timeLeft <= 0) {
         console.log("We are finished!");
         this.pauseTimer();
@@ -54,6 +61,7 @@ class Popup extends React.Component<IProps, IState> {
     }, 1000); // Every second
     this.setState({
       intervalId: intervalHandle,
+      isPaused: false,
     });
   }
 
@@ -65,7 +73,9 @@ class Popup extends React.Component<IProps, IState> {
     window.clearInterval(this.state.intervalId);
     this.setState({
       intervalId: null,
+      isPaused: true,
     });
+    this.writeTimeLeftToLocalStorage(this.state.timeLeft);
   }
 
   private resetTimer = () => {
@@ -92,6 +102,48 @@ class Popup extends React.Component<IProps, IState> {
     }
     displayString += seconds.toString();
     return displayString;
+  }
+
+  private writeTimeLeftToLocalStorage = (timeLeft) => {
+    const timestamp = this.state.isPaused ? null : Date.now() + timeLeft * 1000;
+    console.log('writing to local storage: ' + timestamp);
+    browser.storage.local.set({
+      pomodaro_end: timestamp,
+      timeLeft: timeLeft, // Not a superbly accurate estimate since we don't know when user tabs out
+      isPaused: this.state.isPaused,
+    });
+  }
+
+  private restoreFromLocalStorage = () => {
+    let time = 0;
+    const results = browser.storage.local.get(['pomodaro_end', 'timeLeft', 'isPaused']);
+    results.then((storage) => {
+      console.log(storage);
+      if (storage.pomodaro_end) {
+        time = parseInt(storage.pomodaro_end, 10);
+        // Determine remaining time
+        time = time - Date.now(); // If negative, than timer had elapsed
+        time = Math.floor(time / 1000); // Convert back into seconds
+      } else if (storage.timeLeft) { // Time was paused
+        time = parseInt(storage.timeLeft, 10);
+      }
+      let isPaused = true;
+      if (storage.isPaused) {
+        isPaused = storage.isPaused === 'true';
+      }
+      this.setState({
+        timeLeft: time,
+        displayTime: this.convertSecondsToDisplay(time < 0 ? 0 : time),
+        isPaused: isPaused,
+      });
+      if (!isPaused) {
+        this.resumeTimer();
+      }
+      return time;
+    }, () => {
+      console.log('error');
+      return 0;
+    });
   }
 
   public render() {
