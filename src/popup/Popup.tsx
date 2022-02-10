@@ -1,47 +1,83 @@
+import * as React from 'react';
 import browser from 'webextension-polyfill';
 
-// let currentTab: any;
+interface IProps {
+}
 
-// browser.tabs.query({active: true, currentWindow: true}).then(tabs => currentTab = tabs[0])
+interface IState {
+  timeLeft: number;
+  intervalId: any;
+  displayTime: string;
+}
 
-export const Popup = () => {
-
-  let timeLeft = 0;
-  let intervalId = null;
-
-  const startTimer = () => {
-    if (intervalId) {
-      pauseTimer();
-    }
-    resetTimer();
-    resumeTimer();
+class Popup extends React.Component<IProps, IState> {
+  public state: IState = {
+    timeLeft: 0,
+    intervalId: null,
+    displayTime: '',
   }
 
-  const resumeTimer = () => {
-    if (intervalId) {
+  constructor() {
+    super();
+    this.state = {
+      timeLeft: 0,
+      intervalId: null,
+      displayTime: this.convertSecondsToDisplay(0),
+    }
+  }
+
+  private startTimer = () => {
+    console.log('starting timer');
+    if (this.state.intervalId) {
+      this.pauseTimer();
+    }
+    this.resetTimer();
+    this.resumeTimer();
+  }
+
+  private resumeTimer = () => {
+    console.log('resuming timer');
+    if (this.state.intervalId) {
       return;
     }
-    intervalId = setInterval(() => {
-      timeLeft -= 1;
-      if (timeLeft <= 0) {
+    const intervalHandle = setInterval(() => {
+      let seconds = this.state.timeLeft - 1;
+      this.setState({
+        timeLeft: seconds,
+        displayTime: this.convertSecondsToDisplay(seconds),
+      });
+      console.log(this.state.timeLeft);
+      if (this.state.timeLeft <= 0) {
         console.log("We are finished!");
+        this.pauseTimer();
       }
     }, 1000); // Every second
+    this.setState({
+      intervalId: intervalHandle,
+    });
   }
 
-  const pauseTimer = () => {
-    if (intervalId === null) {
+  private pauseTimer = () => {
+    console.log('pausing timer');
+    if (this.state.intervalId === null) {
       return;
     }
-    window.clearInterval(intervalId);
-    intervalId = null;
+    window.clearInterval(this.state.intervalId);
+    this.setState({
+      intervalId: null,
+    });
   }
 
-  const resetTimer = () => {
-    timeLeft = 60*25;
+  private resetTimer = () => {
+    console.log('reseting timer');
+    const seconds = 60*25;
+    this.setState({
+      timeLeft: seconds,
+      displayTime: this.convertSecondsToDisplay(seconds),
+    });
   }
 
-  const convertSecondsToDisplay = () => {
+  private convertSecondsToDisplay = (timeLeft) => {
     const minutes = Math.floor(timeLeft / 60);
     const seconds = timeLeft % 60;
 
@@ -58,26 +94,29 @@ export const Popup = () => {
     return displayString;
   }
 
-  return (
+  public render() {
+    return (
     <div className="main-popup">
       <main className='timer-display'>
-        <p>{convertSecondsToDisplay()}</p>
+        <p>{this.state.displayTime}</p>
       </main>
       <section className='buttons-panel'>
-        <button onClick={startTimer} className="">
-          {/* <img src="../assets/cat_512.png" alt="cat icon" className="w-8 h-8 mr-3" /> */}
+        <button onClick={this.startTimer} className="">
           start
         </button>
-        <button onClick={resumeTimer} className="">
+        <button onClick={this.resumeTimer} className="">
           resume
         </button>
-        <button onClick={pauseTimer} className="">
+        <button onClick={this.pauseTimer} className="">
           pause
         </button>
-        <button onClick={resetTimer} className="">
+        <button onClick={this.resetTimer} className="">
           reset
         </button>
       </section>
     </div>
     )
+  }
 }
+
+export default Popup;
