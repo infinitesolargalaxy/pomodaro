@@ -4,6 +4,9 @@ My own attempt at a Pomodaro web extension.
 ## Disclaimer
 Pomodoro® and The Pomodoro Technique® are trademarks of Francesco Cirillo. Marinara is not affiliated or associated with or endorsed by Pomodoro®, The Pomodoro Technique® or Francesco Cirillo.
 
+## Attribution
+Alert.mp3: Public Domain from https://soundbible.com/1264-Sunday-Church-Ambiance.html
+
 ## Installation
 
 ```
@@ -45,3 +48,5 @@ Autoprefixer: Automate vendor prefixes for Cross Browser support: https://github
 
 ## Packages:
 webextension-polyfill: Polyfill for most Chromium browsers
+
+

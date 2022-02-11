@@ -54,9 +54,13 @@ class Popup extends React.Component<IProps, IState> {
       console.log(this.state.timeLeft);
       // In case user toggles out of extension
       this.writeTimeLeftToLocalStorage(seconds);
+      const vm = this;
       if (this.state.timeLeft <= 0) {
         console.log("We are finished!");
-        this.pauseTimer();
+        vm.pauseTimer();
+
+        var audio = new Audio('../assets/Alert.mp3');
+        audio.play();
       }
     }, 1000); // Every second
     this.setState({
@@ -80,7 +84,8 @@ class Popup extends React.Component<IProps, IState> {
 
   private resetTimer = () => {
     console.log('reseting timer');
-    const seconds = 60*25;
+    // const seconds = 60*25;
+    const seconds = 5;
     this.setState({
       timeLeft: seconds,
       displayTime: this.convertSecondsToDisplay(seconds),
