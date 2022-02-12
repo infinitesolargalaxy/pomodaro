@@ -1,5 +1,6 @@
 import * as React from 'react';
 import browser from 'webextension-polyfill';
+import { EncouragementGenerator } from "./EncouragementGenerator";
 
 interface IProps {
 }
@@ -60,7 +61,7 @@ class Popup extends React.Component<IProps, IState> {
         vm.pauseTimer();
 
         var audio = new Audio('../assets/Alert.mp3');
-        audio.play();
+        // audio.play();
       }
     }, 1000); // Every second
     this.setState({
@@ -171,6 +172,7 @@ class Popup extends React.Component<IProps, IState> {
           reset
         </button>
       </section>
+      <EncouragementGenerator></EncouragementGenerator>
     </div>
     )
   }

@@ -22,6 +22,8 @@
       "css": ["style.css","reset.css","normalize.css"]
     }],
     "web_accessible_resources": [
-      "./assets/Alert.mp3"
+      "./assets/Alert.mp3",
+      "./assets/alice.jpg",
+      "./assets/koga.jpg"
     ]
   }
