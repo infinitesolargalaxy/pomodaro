@@ -10,11 +10,22 @@ interface IState {
   intervalId: any;
   displayTime: string;
   isPaused: boolean;
-  alarmId: any;
+  currentState: any;
 }
+
+
+
+const breakTime = 5 * 60;
+// const focusTime = 25 * 60;
+const focusTime = 5;
 
 // State:
 // Not in progress, Started, Paused, In Break
+const STATE_NOT_STARTED = 'not_started';
+const STATE_IN_PROGRESS = 'in_progress';
+const STATE_PAUSED = 'paused';
+const STATE_FINISHED = 'finished';
+// const STATE_IN_BREAK = 'in_break';
 
 class Popup extends React.Component<IProps, IState> {
   public state: IState = {
@@ -22,6 +33,7 @@ class Popup extends React.Component<IProps, IState> {
     intervalId: null,
     displayTime: '',
     isPaused: true,
+    currentState: STATE_NOT_STARTED,
   }
 
   constructor() {
@@ -32,8 +44,11 @@ class Popup extends React.Component<IProps, IState> {
       intervalId: null,
       displayTime: this.convertSecondsToDisplay(0),
       isPaused: true,
+      currentState: STATE_NOT_STARTED,
     }
-    this.restoreFromLocalStorage();
+
+    // TODO: Buggy as hell.
+    // this.restoreFromLocalStorage();
   }
 
   private startTimer = () => {
@@ -65,6 +80,10 @@ class Popup extends React.Component<IProps, IState> {
         vm.pauseTimer();
 
         const audio = new Audio('../assets/Alert.mp3');
+
+        this.setState({
+          currentState: STATE_FINISHED,
+        });
         // audio.play();
       }
     }, 1000); // Every second
@@ -75,6 +94,7 @@ class Popup extends React.Component<IProps, IState> {
     this.setState({
       intervalId: intervalHandle,
       isPaused: false,
+      currentState: STATE_IN_PROGRESS,
     });
     
   }
@@ -89,18 +109,45 @@ class Popup extends React.Component<IProps, IState> {
     this.setState({
       intervalId: null,
       isPaused: true,
+      currentState: STATE_PAUSED,
     });
     this.writeTimeLeftToLocalStorage(this.state.timeLeft);
   }
 
   private resetTimer = () => {
+    if (this.state.intervalId) {
+      this.pauseTimer();
+    }
     console.log('reseting timer');
-    // const seconds = 60*25;
-    const seconds = 5;
+    let seconds = focusTime;
+    if (this.state.currentState === STATE_FINISHED) {
+      seconds = breakTime;
+    }
+
     this.setState({
       timeLeft: seconds,
       displayTime: this.convertSecondsToDisplay(seconds),
     });
+  }
+
+  private buttonClick = () => {
+    if (this.state.currentState === STATE_IN_PROGRESS) {
+      this.pauseTimer();
+    } else if (this.state.currentState === STATE_PAUSED) {
+      this.resumeTimer();
+    } else {
+      this.startTimer();
+    }
+  }
+
+  private getButtonName = () => {
+    if (this.state.currentState === STATE_IN_PROGRESS) {
+      return 'Pause';
+    } else if (this.state.currentState === STATE_PAUSED) {
+      return 'Resume';
+    } else {
+      return 'Start';
+    }
   }
 
   private convertSecondsToDisplay = (timeLeft) => {
@@ -173,20 +220,23 @@ class Popup extends React.Component<IProps, IState> {
         <p>{this.state.displayTime}</p>
       </main>
       <section className='buttons-panel'>
-        <button onClick={this.startTimer} className="">
-          start
+        <button onClick={this.buttonClick} className="">
+          { this.getButtonName() }
         </button>
-        <button onClick={this.resumeTimer} className="">
+        {/* <button onClick={this.resumeTimer} className="">
           resume
         </button>
         <button onClick={this.pauseTimer} className="">
           pause
-        </button>
-        <button onClick={this.resetTimer} className="">
-          reset
-        </button>
+        </button> */}
+        { this.state.currentState == STATE_IN_PROGRESS ? 
+          <button onClick={this.resetTimer} className="">
+            reset
+          </button>
+          : null
+        }
       </section>
-      <EncouragementGenerator></EncouragementGenerator>
+      { this.state.currentState == STATE_FINISHED ? <EncouragementGenerator></EncouragementGenerator> : null }
     </div>
     )
   }
