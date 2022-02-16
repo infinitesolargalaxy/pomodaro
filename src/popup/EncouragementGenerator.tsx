@@ -45,7 +45,7 @@ export const EncouragementGenerator = (props) => {
     }
 
     return (
-        <section class="encouragement-popup">
+        <section className="encouragement-popup">
             <figure>
                 <img src={characterData.characterPortrait} alt="Character Portrait"></img>
                 <span>{characterData.characterName}</span>

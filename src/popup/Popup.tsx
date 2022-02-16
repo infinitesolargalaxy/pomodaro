@@ -10,7 +10,11 @@ interface IState {
   intervalId: any;
   displayTime: string;
   isPaused: boolean;
+  alarmId: any;
 }
+
+// State:
+// Not in progress, Started, Paused, In Break
 
 class Popup extends React.Component<IProps, IState> {
   public state: IState = {
@@ -60,14 +64,19 @@ class Popup extends React.Component<IProps, IState> {
         console.log("We are finished!");
         vm.pauseTimer();
 
-        var audio = new Audio('../assets/Alert.mp3');
+        const audio = new Audio('../assets/Alert.mp3');
         // audio.play();
       }
     }, 1000); // Every second
+    browser.alarms.create('pomodaroAlarm', {
+        delayInMinutes: (this.state.timeLeft / 60)
+    });
+
     this.setState({
       intervalId: intervalHandle,
       isPaused: false,
     });
+    
   }
 
   private pauseTimer = () => {
@@ -76,6 +85,7 @@ class Popup extends React.Component<IProps, IState> {
       return;
     }
     window.clearInterval(this.state.intervalId);
+    browser.alarms.clear('pomodaroAlarm');
     this.setState({
       intervalId: null,
       isPaused: true,
@@ -137,13 +147,17 @@ class Popup extends React.Component<IProps, IState> {
       if (storage.isPaused) {
         isPaused = storage.isPaused === 'true';
       }
-      this.setState({
-        timeLeft: time,
-        displayTime: this.convertSecondsToDisplay(time < 0 ? 0 : time),
-        isPaused: isPaused,
-      });
-      if (!isPaused) {
-        this.resumeTimer();
+      if (time > 0) {
+        this.setState({
+          timeLeft: time,
+          displayTime: this.convertSecondsToDisplay(time < 0 ? 0 : time),
+          isPaused: isPaused,
+        });
+        if (!isPaused) {
+          this.resumeTimer();
+        }
+      } else {
+        localStorage.clear();
       }
       return time;
     }, () => {
