@@ -10,22 +10,28 @@
     "icons": {
     },
     "permissions": [
+      "http://*/",
+      "https://*/",
       "tabs",
       "storage",
       "activeTab",
       "alarms",
-      "notifications",
-      "http://*/",
-      "https://*/"
+      "notifications"
     ],
     "content_scripts": [{
       "matches": ["http://*/*", "https://*/*"],
-      "js": ["contentScripts/index.tsx"],
-      "css": ["style.css","reset.css","normalize.css"]
+      "css": ["reset.css","normalize.css","style.css"]
     }],
     "web_accessible_resources": [
       "./assets/Alert.mp3",
       "./assets/alice.jpg",
-      "./assets/koga.jpg"
-    ]
+      "./assets/koga.jpg",
+      "./assets/play-solid.svg",
+      "./assets/pause-solid.svg",
+      "./assets/arrows-rotate-solid.svg"
+    ],
+    "background": {
+      "scripts": ["contentScripts/index.tsx"],
+      "persistent": true
+    }
   }

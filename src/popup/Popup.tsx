@@ -150,6 +150,16 @@ class Popup extends React.Component<IProps, IState> {
     }
   }
 
+  private getButtonIconSrc = () => {
+    if (this.state.currentState === STATE_IN_PROGRESS) {
+      return '../assets/pause-solid.svg';
+    } else if (this.state.currentState === STATE_PAUSED) {
+      return '../assets/play-solid.svg';
+    } else {
+      return '../assets/play-solid.svg';
+    }
+  }
+
   private convertSecondsToDisplay = (timeLeft) => {
     const minutes = Math.floor(timeLeft / 60);
     const seconds = timeLeft % 60;
@@ -220,18 +230,13 @@ class Popup extends React.Component<IProps, IState> {
         <p>{this.state.displayTime}</p>
       </main>
       <section className='buttons-panel'>
-        <button onClick={this.buttonClick} className="">
-          { this.getButtonName() }
+        <button onClick={this.buttonClick} className="cta-button" title={this.getButtonName()}>
+          <img src={this.getButtonIconSrc()} alt={this.getButtonName()}></img>
         </button>
-        {/* <button onClick={this.resumeTimer} className="">
-          resume
-        </button>
-        <button onClick={this.pauseTimer} className="">
-          pause
-        </button> */}
+
         { this.state.currentState == STATE_IN_PROGRESS ? 
-          <button onClick={this.resetTimer} className="">
-            reset
+          <button onClick={this.resetTimer} className="cta-button" title="Reset">
+            <img src="../assets/arrows-rotate-solid.svg" alt="Reset"></img>
           </button>
           : null
         }
