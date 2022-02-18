@@ -13,11 +13,9 @@ interface IState {
   currentState: any;
 }
 
-
-
 const breakTime = 5 * 60;
-// const focusTime = 25 * 60;
-const focusTime = 5;
+const focusTime = 25 * 60;
+// const focusTime = 5;
 
 // State:
 // Not in progress, Started, Paused, In Break
@@ -26,6 +24,8 @@ const STATE_IN_PROGRESS = 'in_progress';
 const STATE_PAUSED = 'paused';
 const STATE_FINISHED = 'finished';
 // const STATE_IN_BREAK = 'in_break';
+
+export const POMODARO_ALARM_ID = 'POMODARO_ALARM_ID';
 
 class Popup extends React.Component<IProps, IState> {
   public state: IState = {
@@ -58,6 +58,7 @@ class Popup extends React.Component<IProps, IState> {
     }
     this.resetTimer();
     this.resumeTimer();
+    browser.notifications.clear(POMODARO_ALARM_ID);
   }
 
   private resumeTimer = () => {
@@ -81,15 +82,25 @@ class Popup extends React.Component<IProps, IState> {
 
         const audio = new Audio('../assets/Alert.mp3');
 
-        this.setState({
+        vm.setState({
           currentState: STATE_FINISHED,
         });
         // audio.play();
+
+        browser.notifications.create(POMODARO_ALARM_ID, {
+            type: 'basic',
+            iconUrl: '../assets/gallery.png',
+            title: 'Times up!',
+            message: "It's time to take a break!",
+            priority: 2
+        });
       }
     }, 1000); // Every second
-    browser.alarms.create('pomodaroAlarm', {
-        delayInMinutes: (this.state.timeLeft / 60)
-    });
+
+    // browser.alarms.create('pomodaroAlarm', {
+    //     when: Date.now(), // Start now
+    //     delayInMinutes: (this.state.timeLeft / 60) // Wait until time is up
+    // });
 
     this.setState({
       intervalId: intervalHandle,

@@ -50,3 +50,10 @@ Autoprefixer: Automate vendor prefixes for Cross Browser support: https://github
 webextension-polyfill: Polyfill for most Chromium browsers
 
 
+## Docs
+
+### Notifications API
+https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/notifications
+
+### Alarms API
+https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/alarms
