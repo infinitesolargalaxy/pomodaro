@@ -35,7 +35,7 @@ export const Encouragement = {
                 text: "Hiya, Whadaya think they'll serve for desert?"
             },
             {
-                text: "Let's take a short break? We've need to stay alert!"
+                text: "Let's take a short break? We need to stay alert!"
             },
         ],
     },

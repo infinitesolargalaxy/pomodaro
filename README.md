@@ -1,11 +1,17 @@
 # pomodaro
 My own attempt at a Pomodaro web extension.
 
+The added twist here is the random generation of "Encouragement" by fictional characters.
+Their text aren't exactly jokes or funny, but I enjoy it. So that's what matters.
+
 ## Disclaimer
 Pomodoro® and The Pomodoro Technique® are trademarks of Francesco Cirillo. Marinara is not affiliated or associated with or endorsed by Pomodoro®, The Pomodoro Technique® or Francesco Cirillo.
 
 ## Attribution
 Alert.mp3: Public Domain from https://soundbible.com/1264-Sunday-Church-Ambiance.html
+
+Character Portraits are from Artbreeder.com.
+- Should be CC0
 
 ## Installation
 
