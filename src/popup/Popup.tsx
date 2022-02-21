@@ -14,8 +14,8 @@ interface IState {
 }
 
 const breakTime = 5 * 60;
-const focusTime = 25 * 60;
-// const focusTime = 5;
+// const focusTime = 25 * 60;
+const focusTime = 5;
 
 // State:
 // Not in progress, Started, Paused, In Break
@@ -96,11 +96,6 @@ class Popup extends React.Component<IProps, IState> {
         });
       }
     }, 1000); // Every second
-
-    // browser.alarms.create('pomodaroAlarm', {
-    //     when: Date.now(), // Start now
-    //     delayInMinutes: (this.state.timeLeft / 60) // Wait until time is up
-    // });
 
     this.setState({
       intervalId: intervalHandle,

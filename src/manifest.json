@@ -31,7 +31,7 @@
       "./assets/arrows-rotate-solid.svg"
     ],
     "background": {
-      "scripts": ["contentScripts/index.tsx"],
-      "persistent": true
+      "scripts": ["backgroundScripts/index.tsx"],
+      "persistent": false
     }
   }
