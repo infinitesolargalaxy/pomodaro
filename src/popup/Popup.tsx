@@ -2,6 +2,13 @@ import * as React from 'react';
 import browser from 'webextension-polyfill';
 import { EncouragementGenerator } from "./EncouragementGenerator";
 
+import { debounce } from "ts-debounce";
+
+const debounceOptions = {
+  isImmediate: true,
+};
+const debounceWait = 50;
+
 interface IProps {
 }
 
@@ -13,10 +20,10 @@ interface IState {
   isBreak: boolean;
 }
 
-// const breakTime = 5 * 60;
-// const focusTime = 25 * 60;
-const breakTime = 10;
-const focusTime = 5;
+const breakTime = 5 * 60;
+const focusTime = 25 * 60;
+// const breakTime = 10;
+// const focusTime = 5;
 
 const DEBUG = true;
 
@@ -48,6 +55,8 @@ class Popup extends React.Component<IProps, IState> {
       currentState: STATE_NOT_STARTED,
     }
 
+    console.log('constructor')
+
     // TODO: Buggy as hell.
     this.restoreFromLocalStorage();
   }
@@ -60,7 +69,7 @@ class Popup extends React.Component<IProps, IState> {
       this.pauseTimer();
     }
     this.resetTimer();
-    this.resumeTimer();
+    this.debouncedResumeTimer();
     browser.notifications.clear(POMODARO_ALARM_ID);
   }
 
@@ -87,10 +96,6 @@ class Popup extends React.Component<IProps, IState> {
           console.log("We are finished!");
         }
         vm.pauseTimer();
-
-        vm.setState({
-          currentState: STATE_FINISHED,
-        });
         // const audio = new Audio('../assets/Alert.mp3');
         // audio.play();
 
@@ -103,6 +108,11 @@ class Popup extends React.Component<IProps, IState> {
         });
 
         window.clearInterval(this.state.intervalId);
+
+        vm.setState({
+          intervalId: null,
+          currentState: STATE_FINISHED,
+        });
       } else {
         // In case user toggles out of extension
         this.writeTimeLeftToLocalStorage(seconds);
@@ -164,10 +174,15 @@ class Popup extends React.Component<IProps, IState> {
     if (this.state.currentState === STATE_IN_PROGRESS) {
       this.pauseTimer();
     } else if (this.state.currentState === STATE_PAUSED) {
-      this.resumeTimer();
+      this.debouncedResumeTimer();
     } else {
       this.startTimer();
     }
+  }
+
+  private debouncedResumeTimer = async () => {
+    const debouncedFunction = debounce(this.resumeTimer, debounceWait, debounceOptions);
+    await debouncedFunction();
   }
 
   private getButtonName = () => {
@@ -221,42 +236,45 @@ class Popup extends React.Component<IProps, IState> {
     browser.storage.local.set(localData);
   }
 
-  private restoreFromLocalStorage = () => {
+  private restoreFromLocalStorage = async () => {
+    console.log('oncee? twice?')
     let time = 0;
-    const results = browser.storage.local.get(['pomodaro_end', 'timeLeft', 'currentState']);
-    results.then((storage) => {
-      if (DEBUG) {
-        console.log(storage);
+    const storage = await browser.storage.local.get(['pomodaro_end', 'timeLeft', 'currentState']);
+
+    let runOnce = false;
+    console.log(storage);
+    if (runOnce) {
+      return;
+    }
+    runOnce = true;
+    if (DEBUG) {
+      console.log(JSON.stringify(storage));
+    }
+    if (storage.pomodaro_end) {
+      time = parseInt(storage.pomodaro_end, 10);
+      // Determine remaining time
+      time = time - Date.now(); // If negative, than timer had elapsed
+      time = Math.floor(time / 1000); // Convert back into seconds
+    } else if (storage.timeLeft) { // Time was paused
+      time = parseInt(storage.timeLeft, 10);
+    }
+    let currentState = STATE_NOT_STARTED;
+    if (storage.currentState) {
+      currentState = storage.currentState;
+    }
+    if (time > 0) {
+      this.setState({
+        timeLeft: time,
+        displayTime: this.convertSecondsToDisplay(time < 0 ? 0 : time),
+        currentState: currentState,
+      });
+      if (currentState === STATE_IN_PROGRESS) {
+        this.debouncedResumeTimer();
       }
-      if (storage.pomodaro_end) {
-        time = parseInt(storage.pomodaro_end, 10);
-        // Determine remaining time
-        time = time - Date.now(); // If negative, than timer had elapsed
-        time = Math.floor(time / 1000); // Convert back into seconds
-      } else if (storage.timeLeft) { // Time was paused
-        time = parseInt(storage.timeLeft, 10);
-      }
-      let currentState = STATE_NOT_STARTED;
-      if (storage.currentState) {
-        currentState = storage.currentState;
-      }
-      if (time > 0) {
-        this.setState({
-          timeLeft: time,
-          displayTime: this.convertSecondsToDisplay(time < 0 ? 0 : time),
-          currentState: currentState,
-        });
-        if (currentState === STATE_IN_PROGRESS) {
-          this.resumeTimer();
-        }
-      } else {
-        localStorage.clear();
-      }
-      return time;
-    }, () => {
-      console.log('error');
-      return 0;
-    });
+    } else {
+      localStorage.clear();
+    }
+    return time;
   }
 
   public render() {
