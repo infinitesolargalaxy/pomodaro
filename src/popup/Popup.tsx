@@ -9,13 +9,16 @@ interface IState {
   timeLeft: number;
   intervalId: any;
   displayTime: string;
-  isPaused: boolean;
   currentState: any;
+  isBreak: boolean;
 }
 
-const breakTime = 5 * 60;
+// const breakTime = 5 * 60;
 // const focusTime = 25 * 60;
+const breakTime = 10;
 const focusTime = 5;
+
+const DEBUG = true;
 
 // State:
 // Not in progress, Started, Paused, In Break
@@ -23,7 +26,6 @@ const STATE_NOT_STARTED = 'not_started';
 const STATE_IN_PROGRESS = 'in_progress';
 const STATE_PAUSED = 'paused';
 const STATE_FINISHED = 'finished';
-// const STATE_IN_BREAK = 'in_break';
 
 export const POMODARO_ALARM_ID = 'POMODARO_ALARM_ID';
 
@@ -32,8 +34,8 @@ class Popup extends React.Component<IProps, IState> {
     timeLeft: 0,
     intervalId: null,
     displayTime: '',
-    isPaused: true,
     currentState: STATE_NOT_STARTED,
+    isBreak: false,
   }
 
   constructor() {
@@ -43,16 +45,17 @@ class Popup extends React.Component<IProps, IState> {
       timeLeft: 0,
       intervalId: null,
       displayTime: this.convertSecondsToDisplay(0),
-      isPaused: true,
       currentState: STATE_NOT_STARTED,
     }
 
     // TODO: Buggy as hell.
-    // this.restoreFromLocalStorage();
+    this.restoreFromLocalStorage();
   }
 
   private startTimer = () => {
-    console.log('starting timer');
+    if (DEBUG) {
+      console.log('starting timer');
+    }
     if (this.state.intervalId) {
       this.pauseTimer();
     }
@@ -62,7 +65,9 @@ class Popup extends React.Component<IProps, IState> {
   }
 
   private resumeTimer = () => {
-    console.log('resuming timer');
+    if (DEBUG) {
+      console.log('resuming timer');
+    }
     if (this.state.intervalId) {
       return;
     }
@@ -72,19 +77,21 @@ class Popup extends React.Component<IProps, IState> {
         timeLeft: seconds,
         displayTime: this.convertSecondsToDisplay(seconds),
       });
-      console.log(this.state.timeLeft);
-      // In case user toggles out of extension
-      this.writeTimeLeftToLocalStorage(seconds);
+
+      if (DEBUG) {
+        console.log(this.state.timeLeft);
+      }
       const vm = this;
       if (this.state.timeLeft <= 0) {
-        console.log("We are finished!");
+        if (DEBUG) {
+          console.log("We are finished!");
+        }
         vm.pauseTimer();
-
-        const audio = new Audio('../assets/Alert.mp3');
 
         vm.setState({
           currentState: STATE_FINISHED,
         });
+        // const audio = new Audio('../assets/Alert.mp3');
         // audio.play();
 
         browser.notifications.create(POMODARO_ALARM_ID, {
@@ -94,27 +101,32 @@ class Popup extends React.Component<IProps, IState> {
             message: "It's time to take a break!",
             priority: 2
         });
+
+        window.clearInterval(this.state.intervalId);
+      } else {
+        // In case user toggles out of extension
+        this.writeTimeLeftToLocalStorage(seconds);
       }
     }, 1000); // Every second
 
     this.setState({
       intervalId: intervalHandle,
-      isPaused: false,
       currentState: STATE_IN_PROGRESS,
     });
     
   }
 
   private pauseTimer = () => {
-    console.log('pausing timer');
+    if (DEBUG) {
+      console.log('pausing timer');
+    }
     if (this.state.intervalId === null) {
       return;
     }
     window.clearInterval(this.state.intervalId);
-    browser.alarms.clear('pomodaroAlarm');
+    // browser.alarms.clear('pomodaroAlarm');
     this.setState({
       intervalId: null,
-      isPaused: true,
       currentState: STATE_PAUSED,
     });
     this.writeTimeLeftToLocalStorage(this.state.timeLeft);
@@ -124,16 +136,28 @@ class Popup extends React.Component<IProps, IState> {
     if (this.state.intervalId) {
       this.pauseTimer();
     }
-    console.log('reseting timer');
+    if (DEBUG) {
+      console.log('reseting timer');
+    }
     let seconds = focusTime;
-    if (this.state.currentState === STATE_FINISHED) {
-      seconds = breakTime;
+    let { currentState, isBreak } = this.state;
+    if (currentState === STATE_FINISHED) {
+      isBreak = !isBreak;
+      if (isBreak) {
+        seconds = breakTime;
+      }
+    } else {
+      isBreak = false;
     }
 
     this.setState({
       timeLeft: seconds,
       displayTime: this.convertSecondsToDisplay(seconds),
+      isBreak: isBreak,
+      currentState: STATE_NOT_STARTED,
     });
+
+    this.writeTimeLeftToLocalStorage(seconds);
   }
 
   private buttonClick = () => {
@@ -184,20 +208,26 @@ class Popup extends React.Component<IProps, IState> {
   }
 
   private writeTimeLeftToLocalStorage = (timeLeft) => {
-    const timestamp = this.state.isPaused ? null : Date.now() + timeLeft * 1000;
-    console.log('writing to local storage: ' + timestamp);
-    browser.storage.local.set({
+    const timestamp = this.state.currentState === STATE_PAUSED ? null : Date.now() + timeLeft * 1000;
+    const localData = {
       pomodaro_end: timestamp,
       timeLeft: timeLeft, // Not a superbly accurate estimate since we don't know when user tabs out
-      isPaused: this.state.isPaused,
-    });
+      currentState: this.state.currentState,
+    };
+    if (DEBUG) {
+      console.log('writing to local storage: ' + JSON.stringify(localData));
+      console.log('human readable date ' + new Date(timestamp));
+    }
+    browser.storage.local.set(localData);
   }
 
   private restoreFromLocalStorage = () => {
     let time = 0;
-    const results = browser.storage.local.get(['pomodaro_end', 'timeLeft', 'isPaused']);
+    const results = browser.storage.local.get(['pomodaro_end', 'timeLeft', 'currentState']);
     results.then((storage) => {
-      console.log(storage);
+      if (DEBUG) {
+        console.log(storage);
+      }
       if (storage.pomodaro_end) {
         time = parseInt(storage.pomodaro_end, 10);
         // Determine remaining time
@@ -206,17 +236,17 @@ class Popup extends React.Component<IProps, IState> {
       } else if (storage.timeLeft) { // Time was paused
         time = parseInt(storage.timeLeft, 10);
       }
-      let isPaused = true;
-      if (storage.isPaused) {
-        isPaused = storage.isPaused === 'true';
+      let currentState = STATE_NOT_STARTED;
+      if (storage.currentState) {
+        currentState = storage.currentState;
       }
       if (time > 0) {
         this.setState({
           timeLeft: time,
           displayTime: this.convertSecondsToDisplay(time < 0 ? 0 : time),
-          isPaused: isPaused,
+          currentState: currentState,
         });
-        if (!isPaused) {
+        if (currentState === STATE_IN_PROGRESS) {
           this.resumeTimer();
         }
       } else {

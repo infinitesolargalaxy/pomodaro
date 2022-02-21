@@ -1,6 +1,10 @@
 import browser from "webextension-polyfill";
 import { POMODARO_ALARM_ID } from "../popup/Popup";
 
+$(document).ready(function(){
+  alert("working");
+});
+
 // browser.alarms.onAlarm.addListener((alarm) => {
 //   if (alarm.name === "pomodaroAlarm") {
 //       console.log('testing alarm detection');
